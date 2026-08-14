@@ -193,7 +193,7 @@ if selected_products:
         if product["type"] == "insurer":
             options = get_low_medium_high(product["rates"])
             option_labels = [
-                f"{label} — {insurer} ({format_currency(rate)})"
+                f"{label} — {insurer}"
                 for label, insurer, rate in options
             ]
             choice = st.radio(
@@ -218,7 +218,7 @@ if selected_products:
 
         else:  # fixed - single insurer, nothing to choose
             insurer, rate = list(product["rates"].items())[0]
-            st.caption(f"{insurer} — {format_currency(rate)} (only option available)")
+            st.caption(f"{insurer} (only option available)")
             product_choices[product_name] = ("Standard", insurer, rate)
 
         st.write("")
