@@ -49,17 +49,17 @@ PRODUCTS = {
             "Cigna Manipal": 156.00,
         },
     },
-    "GTL": {
-        "type": "fixed",
-        "rates": {
-            "IPRU": 450.00,
-        },
-    },
     "PA + CI": {
         "type": "insurer",
         "rates": {
             "Magma": 270.00,
             "Cigna Manipal": 368.00,
+        },
+    },
+    "CI": {
+        "type": "fixed",
+        "rates": {
+            "Cigna Manipal": 344.00,
         },
     },
     "Health": {
