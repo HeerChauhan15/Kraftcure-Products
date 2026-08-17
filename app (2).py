@@ -217,7 +217,7 @@ product_choices = {}  # product_name -> (label, insurer, rate)
 if selected_products:
     st.divider()
     st.markdown('<div class="kc-section-card">', unsafe_allow_html=True)
-    st.subheader("2. Choose Option per Product")
+    st.subheader("2. Choose Insurer")
 
     for product_name in selected_products:
         product = PRODUCTS[product_name]
