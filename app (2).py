@@ -26,7 +26,7 @@ PRODUCTS = {
     "PA": {
         "type": "insurer",
         "rates": {
-            "Care": 9.32,
+            "Care": 12.00,
             "Aditya Birla": 21.186440677966104,
             "Cigna Manipal": 24.00,
         },
@@ -126,35 +126,14 @@ def format_currency(amount):
     return f"₹{formatted}"
 
 
-def get_low_medium_high(rates_dict):
+def get_insurer_options(rates_dict):
     """
     Given a dict of {insurer: rate}, return an ordered list of
-    (label, insurer, rate) tuples.
-    - 1 insurer  -> [("Standard", insurer, rate)]
-    - 2 insurers -> [("Low", ...), ("High", ...)]
-    - 3+ insurers -> [("Low", ...), ("Medium", ...), ("High", ...)]
-      (Medium = the middle-ranked insurer by rate; if more than 3
-      insurers exist, Low/High are min/max and Medium is the median)
+    (insurer, rate) tuples sorted by rate ascending — one entry
+    per insurer available for that product, so the user can pick
+    whichever insurer they want directly.
     """
-    sorted_items = sorted(rates_dict.items(), key=lambda x: x[1])
-
-    if len(sorted_items) == 1:
-        insurer, rate = sorted_items[0]
-        return [("Standard", insurer, rate)]
-
-    if len(sorted_items) == 2:
-        (low_ins, low_rate), (high_ins, high_rate) = sorted_items
-        return [("Low", low_ins, low_rate), ("High", high_ins, high_rate)]
-
-    low_ins, low_rate = sorted_items[0]
-    high_ins, high_rate = sorted_items[-1]
-    mid_index = len(sorted_items) // 2
-    med_ins, med_rate = sorted_items[mid_index]
-    return [
-        ("Low", low_ins, low_rate),
-        ("Medium", med_ins, med_rate),
-        ("High", high_ins, high_rate),
-    ]
+    return sorted(rates_dict.items(), key=lambda x: x[1])
 
 
 # ---------------------------------------------------------
@@ -191,19 +170,16 @@ if selected_products:
         st.markdown(f"**{product_name}**")
 
         if product["type"] == "insurer":
-            options = get_low_medium_high(product["rates"])
-            option_labels = [
-                f"{label} — {insurer}"
-                for label, insurer, rate in options
-            ]
-            choice = st.radio(
-                f"Choose option for {product_name}",
-                option_labels,
-                key=f"radio_{product_name}",
+            options = get_insurer_options(product["rates"])
+            insurer_names = [insurer for insurer, rate in options]
+            chosen_insurer = st.selectbox(
+                f"Insurer for {product_name}",
+                insurer_names,
+                key=f"insurer_{product_name}",
                 label_visibility="collapsed",
             )
-            chosen = options[option_labels.index(choice)]
-            product_choices[product_name] = chosen
+            chosen_rate = product["rates"][chosen_insurer]
+            product_choices[product_name] = ("Standard", chosen_insurer, chosen_rate)
 
         elif product["type"] == "tier":
             tier_labels = list(product["rates"].keys())
@@ -230,12 +206,14 @@ if selected_products:
 loading = 0.0
 if selected_products:
     st.divider()
-    st.subheader("3. Loading (optional)")
+    st.subheader("3. Loading / Partner Commission (optional)")
     loading = st.number_input(
-        "Loading on combined premium (%)",
+        "Loading (partner commission) on combined premium (%)",
         min_value=0.0,
+        max_value=99.0,
         value=0.0,
         step=0.5,
+        help="Premium is grossed up so this % of the final premium (before GST) equals the partner payout.",
     )
 
 # ---------------------------------------------------------
@@ -260,14 +238,25 @@ if calculate:
 
         col1, col2 = st.columns([3, 2])
         with col1:
-            st.write(f"**{product_name}** — {insurer} ({label})")
+            if label == "Standard":
+                st.write(f"**{product_name}** — {insurer}")
+            else:
+                st.write(f"**{product_name}** — {insurer} ({label})")
         with col2:
             st.write(format_currency(rate))
 
     st.divider()
 
-    loading_amount = total_base_premium * loading / 100
-    premium_before_gst = total_base_premium + loading_amount
+    # Loading is treated as embedded partner commission: the base
+    # premium is grossed up so that `loading`% of the FINAL premium
+    # (before GST) equals the loading/partner-payout amount.
+    #   premium_before_gst = base / (1 - loading%)
+    #   loading_amount      = premium_before_gst - base
+    #                        = loading% of premium_before_gst (same value)
+    premium_before_gst = total_base_premium / (1 - loading / 100)
+    loading_amount = premium_before_gst - total_base_premium
+    partner_payout = loading_amount  # identical value, shown for the partner's clarity
+
     gst_amount = premium_before_gst * GST_RATE / 100
     premium_with_gst = premium_before_gst + gst_amount
 
@@ -276,6 +265,8 @@ if calculate:
         st.metric("Base Premium (sum of products)", format_currency(total_base_premium))
     with col2:
         st.metric("Loading Amount", format_currency(loading_amount))
+
+    st.metric("Partner Payout", format_currency(partner_payout))
 
     st.divider()
 
