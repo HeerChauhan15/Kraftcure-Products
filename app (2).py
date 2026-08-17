@@ -167,37 +167,44 @@ if selected_products:
 
     for product_name in selected_products:
         product = PRODUCTS[product_name]
-        st.markdown(f"**{product_name}**")
+        col_label, col_input = st.columns([1, 2])
 
         if product["type"] == "insurer":
             options = get_insurer_options(product["rates"])
             insurer_names = [insurer for insurer, rate in options]
-            chosen_insurer = st.selectbox(
-                f"Insurer for {product_name}",
-                insurer_names,
-                key=f"insurer_{product_name}",
-                label_visibility="collapsed",
-            )
+            with col_label:
+                st.markdown(f"**{product_name}**")
+            with col_input:
+                chosen_insurer = st.selectbox(
+                    f"Insurer for {product_name}",
+                    insurer_names,
+                    key=f"insurer_{product_name}",
+                    label_visibility="collapsed",
+                )
             chosen_rate = product["rates"][chosen_insurer]
             product_choices[product_name] = ("Standard", chosen_insurer, chosen_rate)
 
         elif product["type"] == "tier":
             tier_labels = list(product["rates"].keys())
-            tier = st.selectbox(
-                f"Sum Insured tier for {product_name}",
-                tier_labels,
-                key=f"tier_{product_name}",
-                label_visibility="collapsed",
-            )
+            with col_label:
+                st.markdown(f"**{product_name}**")
+            with col_input:
+                tier = st.selectbox(
+                    f"Sum Insured tier for {product_name}",
+                    tier_labels,
+                    key=f"tier_{product_name}",
+                    label_visibility="collapsed",
+                )
             rate = product["rates"][tier]
             product_choices[product_name] = (tier, product["insurer"], rate)
 
         else:  # fixed - single insurer, nothing to choose
             insurer, rate = list(product["rates"].items())[0]
-            st.caption(f"{insurer} (only option available)")
+            with col_label:
+                st.markdown(f"**{product_name}**")
+            with col_input:
+                st.caption(f"{insurer} (only option available)")
             product_choices[product_name] = ("Standard", insurer, rate)
-
-        st.write("")
 
 # ---------------------------------------------------------
 # OPTIONAL LOADING
