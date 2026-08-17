@@ -25,7 +25,7 @@ st.markdown(
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 10px 30px 18px 30px;
+        padding: 10px 60px 18px 60px;
     }
     .kc-header-bar img { height: 52px; object-fit: contain; }
     .kc-title-block { text-align: center; flex: 1; padding: 0 40px; }
@@ -198,7 +198,6 @@ st.markdown(
         <div class="kc-title-block">
             <h1>Kraftcure Products</h1>
             <p class="kc-tagline">You Choose. We Deliver.</p>
-            <p class="kc-subtext">Pick your products, choose the best-fit insurer for each, and get an instant combined premium — GST and partner payout included.</p>
         </div>
         <img src="data:image/png;base64,{POLICYGRACE_LOGO_B64}" alt="Policygrace logo">
     </div>
