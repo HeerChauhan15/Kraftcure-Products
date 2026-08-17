@@ -1,13 +1,50 @@
 import streamlit as st
+from logo_b64 import KRAFTCURE_LOGO_B64, POLICYGRACE_LOGO_B64
 
 # ---------------------------------------------------------
 # PAGE CONFIGURATION
 # ---------------------------------------------------------
 
 st.set_page_config(
-    page_title="Insurance Premium Calculator",
+    page_title="Kraftcure Products",
     page_icon="💰",
     layout="centered"
+)
+
+# ---------------------------------------------------------
+# LIGHT STYLING
+# ---------------------------------------------------------
+
+st.markdown(
+    """
+    <style>
+    .kc-header-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 4px 14px 4px;
+    }
+    .kc-header-bar img { height: 52px; object-fit: contain; }
+    .kc-title-block { text-align: center; flex: 1; }
+    .kc-title-block h1 {
+        margin: 0;
+        font-size: 1.9rem;
+        background: linear-gradient(90deg, #10b981, #f97316);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .kc-title-block p { margin: 2px 0 0 0; color: #6b7280; font-size: 0.9rem; }
+    .kc-section-card {
+        background: #fafafa;
+        border: 1px solid #eee;
+        border-radius: 12px;
+        padding: 18px 20px 8px 20px;
+        margin-bottom: 18px;
+    }
+    div[data-testid="stMetricValue"] { font-size: 1.4rem; }
+    </style>
+    """,
+    unsafe_allow_html=True,
 )
 
 GST_RATE = 18.0
@@ -78,24 +115,30 @@ PRODUCTS = {
 # HELPER FUNCTION - INDIAN CURRENCY FORMAT
 # ---------------------------------------------------------
 
+import math
+
+def round_half_up(amount):
+    """
+    Round to the nearest whole number, rounding .5 and above UP
+    (not Python's default banker's rounding, which rounds .5 to
+    the nearest even number).
+    """
+    if amount >= 0:
+        return math.floor(amount + 0.5)
+    return -math.floor(-amount + 0.5)
+
+
 def format_currency(amount):
     """
-    Format number using Indian numbering system.
+    Format number using Indian numbering system, rounded to the
+    nearest whole rupee (0.5 and above rounds up).
     Example:
     1000000 -> ₹10,00,000
     """
-    amount = round(amount, 2)
-
-    if amount == int(amount):
-        amount = int(amount)
+    amount = round_half_up(amount)
 
     number = str(amount)
-
-    if "." in number:
-        integer_part, decimal_part = number.split(".")
-    else:
-        integer_part = number
-        decimal_part = ""
+    integer_part = number
 
     negative = integer_part.startswith("-")
     if negative:
@@ -120,9 +163,6 @@ def format_currency(amount):
     if negative:
         formatted = "-" + formatted
 
-    if decimal_part:
-        formatted += "." + decimal_part
-
     return f"₹{formatted}"
 
 
@@ -140,20 +180,33 @@ def get_insurer_options(rates_dict):
 # HEADER
 # ---------------------------------------------------------
 
-st.title("💰 Insurance Premium Calculator")
-st.caption("Select one or more products, pick an option for each, and get a combined premium.")
+st.markdown(
+    f"""
+    <div class="kc-header-bar">
+        <img src="data:image/png;base64,{KRAFTCURE_LOGO_B64}" alt="Kraftcure logo">
+        <div class="kc-title-block">
+            <h1>Kraftcure Products</h1>
+            <p>Select one or more products, pick an option for each, and get a combined premium.</p>
+        </div>
+        <img src="data:image/png;base64,{POLICYGRACE_LOGO_B64}" alt="Policygrace logo">
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 st.divider()
 
 # ---------------------------------------------------------
 # PRODUCT SELECTION
 # ---------------------------------------------------------
 
+st.markdown('<div class="kc-section-card">', unsafe_allow_html=True)
 st.subheader("1. Select Products")
 
 selected_products = st.multiselect(
     "Which product(s) do you want to quote?",
     list(PRODUCTS.keys()),
 )
+st.markdown('</div>', unsafe_allow_html=True)
 
 # ---------------------------------------------------------
 # PER-PRODUCT OPTIONS
@@ -163,6 +216,7 @@ product_choices = {}  # product_name -> (label, insurer, rate)
 
 if selected_products:
     st.divider()
+    st.markdown('<div class="kc-section-card">', unsafe_allow_html=True)
     st.subheader("2. Choose Option per Product")
 
     for product_name in selected_products:
@@ -206,6 +260,8 @@ if selected_products:
                 st.caption(f"{insurer} (only option available)")
             product_choices[product_name] = ("Standard", insurer, rate)
 
+    st.markdown('</div>', unsafe_allow_html=True)
+
 # ---------------------------------------------------------
 # OPTIONAL LOADING
 # ---------------------------------------------------------
@@ -213,6 +269,7 @@ if selected_products:
 loading = 0.0
 if selected_products:
     st.divider()
+    st.markdown('<div class="kc-section-card">', unsafe_allow_html=True)
     st.subheader("3. Loading / Partner Commission (optional)")
     loading = st.number_input(
         "Loading (partner commission) on combined premium (%)",
@@ -222,6 +279,7 @@ if selected_products:
         step=0.5,
         help="Premium is grossed up so this % of the final premium (before GST) equals the partner payout.",
     )
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # ---------------------------------------------------------
 # CALCULATE
@@ -235,6 +293,7 @@ else:
 
 if calculate:
     st.divider()
+    st.markdown('<div class="kc-section-card">', unsafe_allow_html=True)
     st.subheader("Premium Quotation")
 
     total_base_premium = 0.0
@@ -284,3 +343,5 @@ if calculate:
         st.metric("GST @ 18%", format_currency(gst_amount))
     with col3:
         st.metric("Premium Including GST", format_currency(premium_with_gst))
+
+    st.markdown('</div>', unsafe_allow_html=True)
