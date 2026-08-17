@@ -18,14 +18,17 @@ st.set_page_config(
 st.markdown(
     """
     <style>
+    .stApp {
+        background: linear-gradient(180deg, #eef2f7 0%, #f7f4ee 100%);
+    }
     .kc-header-bar {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 6px 4px 14px 4px;
+        padding: 10px 30px 18px 30px;
     }
     .kc-header-bar img { height: 52px; object-fit: contain; }
-    .kc-title-block { text-align: center; flex: 1; }
+    .kc-title-block { text-align: center; flex: 1; padding: 0 40px; }
     .kc-title-block h1 {
         margin: 0;
         font-size: 1.9rem;
@@ -33,13 +36,21 @@ st.markdown(
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
-    .kc-title-block p { margin: 2px 0 0 0; color: #6b7280; font-size: 0.9rem; }
+    .kc-title-block .kc-tagline {
+        margin: 2px 0 0 0;
+        color: #374151;
+        font-size: 1rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    .kc-title-block .kc-subtext { margin: 4px 0 0 0; color: #6b7280; font-size: 0.9rem; }
     .kc-section-card {
-        background: #fafafa;
-        border: 1px solid #eee;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
         border-radius: 12px;
         padding: 18px 20px 8px 20px;
         margin-bottom: 18px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
     div[data-testid="stMetricValue"] { font-size: 1.4rem; }
     </style>
@@ -186,7 +197,8 @@ st.markdown(
         <img src="data:image/png;base64,{KRAFTCURE_LOGO_B64}" alt="Kraftcure logo">
         <div class="kc-title-block">
             <h1>Kraftcure Products</h1>
-            <p>Select one or more products, pick an option for each, and get a combined premium.</p>
+            <p class="kc-tagline">You Choose. We Deliver.</p>
+            <p class="kc-subtext">Pick your products, choose the best-fit insurer for each, and get an instant combined premium — GST and partner payout included.</p>
         </div>
         <img src="data:image/png;base64,{POLICYGRACE_LOGO_B64}" alt="Policygrace logo">
     </div>
@@ -217,7 +229,7 @@ product_choices = {}  # product_name -> (label, insurer, rate)
 if selected_products:
     st.divider()
     st.markdown('<div class="kc-section-card">', unsafe_allow_html=True)
-    st.subheader("2. Choose Insurer")
+    st.subheader("2. Choose Option per Product")
 
     for product_name in selected_products:
         product = PRODUCTS[product_name]
