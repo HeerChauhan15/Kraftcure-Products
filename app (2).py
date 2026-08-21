@@ -1,5 +1,8 @@
 import streamlit as st
 import math
+import base64
+from io import BytesIO
+
 from logo_b64 import KRAFTCURE_LOGO_B64, POLICYGRACE_LOGO_B64
 
 
@@ -8,7 +11,7 @@ from logo_b64 import KRAFTCURE_LOGO_B64, POLICYGRACE_LOGO_B64
 # ============================================================
 
 st.set_page_config(
-    page_title="Kraftcure Products",
+    page_title="Kraftcure Products Calculator",
     page_icon="💰",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -16,14 +19,36 @@ st.set_page_config(
 
 
 # ============================================================
-# DASHBOARD UI
+# HELPER: CONVERT BASE64 LOGO TO IMAGE
+# ============================================================
+
+def base64_to_image(base64_string):
+
+    try:
+        image_data = base64.b64decode(base64_string)
+        return BytesIO(image_data)
+
+    except Exception:
+        return None
+
+
+# ============================================================
+# LOAD LOGOS
+# ============================================================
+
+kraftcure_logo = base64_to_image(KRAFTCURE_LOGO_B64)
+policygrace_logo = base64_to_image(POLICYGRACE_LOGO_B64)
+
+
+# ============================================================
+# PROFESSIONAL DASHBOARD UI
 # ============================================================
 
 st.markdown("""
 <style>
 
 .stApp {
-    background: #f5f7fb;
+    background-color: #f4f6fa;
 }
 
 .block-container {
@@ -46,19 +71,21 @@ header {
 
 
 /* ============================================================
-   DASHBOARD HEADER
+   HEADER CONTAINER
    ============================================================ */
 
-.dashboard-header {
+.header-container {
     background: linear-gradient(
         135deg,
-        #0f172a,
+        #172554,
         #1e3a8a,
         #2563eb
     );
 
     border-radius: 20px;
-    padding: 28px 34px;
+
+    padding: 20px 25px;
+
     margin-bottom: 28px;
 
     box-shadow:
@@ -66,43 +93,41 @@ header {
         rgba(15, 23, 42, 0.20);
 }
 
-.dashboard-header-content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 25px;
-}
 
-.dashboard-logo {
-    height: 48px;
-    max-width: 160px;
-    object-fit: contain;
-}
+/* ============================================================
+   HEADER TEXT
+   ============================================================ */
 
-.dashboard-title-area {
-    text-align: center;
-    flex: 1;
-}
-
-.dashboard-badge {
+.header-badge {
     color: #bfdbfe;
+
     font-size: 10px;
+
     font-weight: 800;
-    letter-spacing: 1.5px;
+
+    letter-spacing: 1.8px;
+
     margin-bottom: 10px;
 }
 
-.dashboard-title {
+.header-title {
     color: white;
+
     font-size: 32px;
+
     font-weight: 800;
-    margin-bottom: 6px;
+
+    line-height: 1.2;
+
+    margin-bottom: 10px;
 }
 
-.dashboard-subtitle {
+.header-subtitle {
     color: #dbeafe;
+
     font-size: 14px;
-    line-height: 1.5;
+
+    line-height: 1.7;
 }
 
 
@@ -112,41 +137,34 @@ header {
 
 .section-label {
     color: #2563eb;
+
     font-size: 10px;
+
     font-weight: 800;
+
     letter-spacing: 1.5px;
-    margin-top: 15px;
-    margin-bottom: 6px;
+
+    margin-top: 12px;
+
+    margin-bottom: 7px;
 }
 
 .section-title {
     color: #0f172a;
+
     font-size: 24px;
+
     font-weight: 800;
+
     margin-bottom: 6px;
 }
 
 .section-subtitle {
     color: #64748b;
+
     font-size: 13px;
+
     margin-bottom: 18px;
-}
-
-
-/* ============================================================
-   DASHBOARD CARD
-   ============================================================ */
-
-.dashboard-card {
-    background: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 16px;
-    padding: 22px;
-    margin-bottom: 20px;
-
-    box-shadow:
-        0 8px 20px
-        rgba(15, 23, 42, 0.05);
 }
 
 
@@ -155,30 +173,37 @@ header {
    ============================================================ */
 
 .kpi-card {
-    min-height: 155px;
+    min-height: 160px;
+
     border-radius: 18px;
+
     padding: 22px;
+
     color: white;
+
+    position: relative;
+
+    overflow: hidden;
 
     box-shadow:
         0 10px 24px
         rgba(15, 23, 42, 0.14);
-
-    position: relative;
-    overflow: hidden;
 }
 
 .kpi-card::after {
     content: "";
+
     position: absolute;
 
-    width: 110px;
-    height: 110px;
+    width: 115px;
+
+    height: 115px;
 
     border-radius: 50%;
 
-    top: -40px;
-    right: -40px;
+    top: -42px;
+
+    right: -42px;
 
     background:
         rgba(255, 255, 255, 0.10);
@@ -222,36 +247,45 @@ header {
 
 .kpi-label {
     font-size: 10px;
+
     font-weight: 800;
+
     letter-spacing: 1.3px;
+
     opacity: 0.85;
 
     margin-bottom: 22px;
 
     position: relative;
+
     z-index: 2;
 }
 
 .kpi-value {
     font-size: 28px;
+
     font-weight: 800;
 
     position: relative;
+
     z-index: 2;
 }
 
 .kpi-note {
     font-size: 11px;
+
     margin-top: 18px;
+
     opacity: 0.82;
 
     position: relative;
+
     z-index: 2;
 }
 
 
 /* ============================================================
-   FINAL PREMIUM CARD
+   FINAL RESULT CARD
    ============================================================ */
 
 .final-result-card {
@@ -265,9 +299,10 @@ header {
 
     border-radius: 22px;
 
-    padding: 32px;
+    padding: 34px;
 
     text-align: center;
+
     color: white;
 
     margin-top: 24px;
@@ -279,21 +314,28 @@ header {
 
 .final-result-label {
     font-size: 11px;
+
     font-weight: 800;
+
     letter-spacing: 1.8px;
+
     opacity: 0.85;
 }
 
 .final-result-value {
-    font-size: 48px;
+    font-size: 50px;
+
     font-weight: 800;
-    margin-top: 8px;
+
+    margin-top: 10px;
 }
 
 .final-result-note {
     font-size: 12px;
-    opacity: 0.82;
-    margin-top: 7px;
+
+    opacity: 0.85;
+
+    margin-top: 8px;
 }
 
 
@@ -303,10 +345,14 @@ header {
 
 .footer {
     text-align: center;
+
     color: #94a3b8;
+
     font-size: 11px;
-    margin-top: 32px;
-    padding-bottom: 10px;
+
+    margin-top: 35px;
+
+    padding-bottom: 15px;
 }
 
 </style>
@@ -314,10 +360,11 @@ header {
 
 
 # ============================================================
-# HELPER FUNCTION
+# HTML HELPER
 # ============================================================
 
 def render_html(html):
+
     st.markdown(
         html.strip(),
         unsafe_allow_html=True
@@ -398,7 +445,7 @@ PRODUCTS = {
 
 # ============================================================
 # HELPER FUNCTIONS
-# CALCULATION LOGIC UNCHANGED
+# CALCULATOR LOGIC UNCHANGED
 # ============================================================
 
 def round_half_up(amount):
@@ -415,22 +462,20 @@ def format_currency(amount):
 
     number = str(amount)
 
-    integer_part = number
-
-    negative = integer_part.startswith("-")
+    negative = number.startswith("-")
 
     if negative:
-        integer_part = integer_part[1:]
+        number = number[1:]
 
-    if len(integer_part) <= 3:
+    if len(number) <= 3:
 
-        formatted = integer_part
+        formatted = number
 
     else:
 
-        last_three = integer_part[-3:]
+        last_three = number[-3:]
 
-        remaining = integer_part[:-3]
+        remaining = number[:-3]
 
         groups = []
 
@@ -472,52 +517,65 @@ def get_insurer_options(rates_dict):
 
 
 # ============================================================
-# DASHBOARD HEADER
+# HEADER
+# LOGOS USE NATIVE STREAMLIT
 # ============================================================
 
-render_html(
-    f"""
-<div class="dashboard-header">
+render_html("""
+<div class="header-container">
+""")
 
-<div class="dashboard-header-content">
-
-<img
-class="dashboard-logo"
-src="data:image/png;base64,{KRAFTCURE_LOGO_B64}"
-alt="Kraftcure logo"
->
-
-<div class="dashboard-title-area">
-
-<div class="dashboard-badge">
-KRAFTCURE • POLICYGRACE
-</div>
-
-<div class="dashboard-title">
-Kraftcure Products Calculator
-</div>
-
-<div class="dashboard-subtitle">
-Select your insurance products, choose the right coverage options
-and calculate the final premium instantly.
-</div>
-
-</div>
-
-<img
-class="dashboard-logo"
-src="data:image/png;base64,{POLICYGRACE_LOGO_B64}"
-alt="Policygrace logo"
->
-
-</div>
-
-</div>
-"""
+logo_col_1, title_col, logo_col_2 = st.columns(
+    [1.2, 3, 1.2],
+    vertical_alignment="center"
 )
 
 
+with logo_col_1:
+
+    if kraftcure_logo:
+
+        st.image(
+            kraftcure_logo,
+            width=130
+        )
+
+
+with title_col:
+
+    render_html("""
+<div class="header-badge">
+KRAFTCURE • POLICYGRACE
+</div>
+
+<div class="header-title">
+Kraftcure Products Calculator
+</div>
+
+<div class="header-subtitle">
+Select your insurance products, choose the right coverage options
+and calculate the final premium instantly.
+</div>
+""")
+
+
+with logo_col_2:
+
+    if policygrace_logo:
+
+        st.image(
+            policygrace_logo,
+            width=130
+        )
+
+
+render_html("""
+</div>
+""")
+
+
 # ============================================================
+# STEP 01
 # PRODUCT SELECTION
 # ============================================================
 
@@ -536,24 +594,15 @@ Choose one or more products to include in the quotation.
 """)
 
 
-st.markdown(
-    '<div class="dashboard-card">',
-    unsafe_allow_html=True
-)
-
 selected_products = st.multiselect(
     "Which product(s) do you want to quote?",
     list(PRODUCTS.keys())
 )
 
-st.markdown(
-    '</div>',
-    unsafe_allow_html=True
-)
-
 
 # ============================================================
-# PER PRODUCT OPTIONS
+# STEP 02
+# PRODUCT OPTIONS
 # ============================================================
 
 product_choices = {}
@@ -577,18 +626,19 @@ Select the insurer or coverage option for each product.
 </div>
 """)
 
-    st.markdown(
-        '<div class="dashboard-card">',
-        unsafe_allow_html=True
-    )
 
     for product_name in selected_products:
 
         product = PRODUCTS[product_name]
 
-        col_label, col_input = st.columns(
+        left_col, right_col = st.columns(
             [1, 2]
         )
+
+
+        # ----------------------------------------------------
+        # INSURER TYPE
+        # ----------------------------------------------------
 
         if product["type"] == "insurer":
 
@@ -601,25 +651,28 @@ Select the insurer or coverage option for each product.
                 for insurer, rate in options
             ]
 
-            with col_label:
+
+            with left_col:
 
                 st.markdown(
-                    f"**{product_name}**"
+                    f"### {product_name}"
                 )
 
-            with col_input:
+
+            with right_col:
 
                 chosen_insurer = st.selectbox(
                     f"Insurer for {product_name}",
                     insurer_names,
-                    key=f"insurer_{product_name}",
-                    label_visibility="collapsed"
+                    key=f"insurer_{product_name}"
                 )
+
 
             chosen_rate = (
                 product["rates"]
                 [chosen_insurer]
             )
+
 
             product_choices[product_name] = (
                 "Standard",
@@ -628,30 +681,37 @@ Select the insurer or coverage option for each product.
             )
 
 
+        # ----------------------------------------------------
+        # TIER TYPE
+        # ----------------------------------------------------
+
         elif product["type"] == "tier":
 
             tier_labels = list(
                 product["rates"].keys()
             )
 
-            with col_label:
+
+            with left_col:
 
                 st.markdown(
-                    f"**{product_name}**"
+                    f"### {product_name}"
                 )
 
-            with col_input:
+
+            with right_col:
 
                 tier = st.selectbox(
-                    f"Sum Insured tier for {product_name}",
+                    f"Sum Insured for {product_name}",
                     tier_labels,
-                    key=f"tier_{product_name}",
-                    label_visibility="collapsed"
+                    key=f"tier_{product_name}"
                 )
+
 
             rate = (
                 product["rates"][tier]
             )
+
 
             product_choices[product_name] = (
                 tier,
@@ -660,24 +720,30 @@ Select the insurer or coverage option for each product.
             )
 
 
+        # ----------------------------------------------------
+        # FIXED TYPE
+        # ----------------------------------------------------
+
         else:
 
             insurer, rate = list(
                 product["rates"].items()
             )[0]
 
-            with col_label:
+
+            with left_col:
 
                 st.markdown(
-                    f"**{product_name}**"
+                    f"### {product_name}"
                 )
 
-            with col_input:
 
-                st.caption(
-                    f"{insurer} "
-                    "(only option available)"
+            with right_col:
+
+                st.info(
+                    f"{insurer} is the configured option."
                 )
+
 
             product_choices[product_name] = (
                 "Standard",
@@ -685,14 +751,10 @@ Select the insurer or coverage option for each product.
                 rate
             )
 
-    st.markdown(
-        '</div>',
-        unsafe_allow_html=True
-    )
-
 
 # ============================================================
-# OPTIONAL LOADING
+# STEP 03
+# LOADING / PARTNER COMMISSION
 # ============================================================
 
 loading = 0.0
@@ -716,10 +778,6 @@ Optionally add partner commission to the combined premium.
 </div>
 """)
 
-    st.markdown(
-        '<div class="dashboard-card">',
-        unsafe_allow_html=True
-    )
 
     loading = st.number_input(
         "Loading (partner commission) on combined premium (%)",
@@ -732,11 +790,6 @@ Optionally add partner commission to the combined premium.
             "of the final premium before GST equals "
             "the partner payout."
         )
-    )
-
-    st.markdown(
-        '</div>',
-        unsafe_allow_html=True
     )
 
 
@@ -757,8 +810,7 @@ else:
     calculate = False
 
     st.info(
-        "Select at least one product above "
-        "to calculate a premium."
+        "Select at least one product to calculate the premium."
     )
 
 
@@ -792,6 +844,7 @@ Live premium calculation based on your selected products.
 
     total_base_premium = 0.0
 
+
     for product_name in selected_products:
 
         label, insurer, rate = (
@@ -811,17 +864,21 @@ Live premium calculation based on your selected products.
         (1 - loading / 100)
     )
 
+
     loading_amount = (
         premium_before_gst -
         total_base_premium
     )
 
+
     partner_payout = loading_amount
+
 
     gst_amount = (
         premium_before_gst *
         GST_RATE / 100
     )
+
 
     premium_with_gst = (
         premium_before_gst +
@@ -835,21 +892,25 @@ Live premium calculation based on your selected products.
 
     st.subheader("Selected Products")
 
+
     for product_name in selected_products:
 
         label, insurer, rate = (
             product_choices[product_name]
         )
 
+
         product_col, insurer_col, premium_col = (
             st.columns([2, 2, 1])
         )
+
 
         with product_col:
 
             st.write(
                 f"**{product_name}**"
             )
+
 
         with insurer_col:
 
@@ -863,6 +924,7 @@ Live premium calculation based on your selected products.
                     f"{insurer} • {label}"
                 )
 
+
         with premium_col:
 
             st.write(
@@ -875,6 +937,7 @@ Live premium calculation based on your selected products.
     # ========================================================
 
     st.divider()
+
 
     c1, c2, c3, c4 = st.columns(4)
 
