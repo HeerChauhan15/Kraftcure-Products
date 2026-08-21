@@ -198,13 +198,19 @@ st.markdown("""
 
 # ============================================================
 # BACKEND PRODUCT DATA
+# (unchanged from source logic file)
+# All rates are FLAT, PRE-GST premium per member (₹).
+# GST (18%) is added on top at calculation time.
+#
+# Structure:
+#   "type": "insurer"  -> user picks Low / Medium / High (based on insurer rate)
+#   "type": "tier"     -> user picks a Sum Insured tier (single insurer)
+#   "type": "fixed"    -> only one insurer/rate, nothing to pick
 # ============================================================
 
 GST_RATE = 18.0
 
-
 PRODUCTS = {
-
     "PA": {
         "type": "insurer",
         "rates": {
@@ -213,66 +219,45 @@ PRODUCTS = {
             "Cigna Manipal": 24.00,
         },
     },
-
-    "Hospicash": {
-        "type": "insurer",
-        "rates": {
-            "ZUNO": 150.00,
-        },
-    },
-
     "PA Hospicash": {
         "type": "insurer",
         "rates": {
-            "Magma": 424.00,
+            "Magma": 471.00,
             "Tata": 169.00,
         },
     },
-
     "PA + Cancer Specific": {
         "type": "fixed",
         "rates": {
             "Cigna Manipal": 180.00,
         },
     },
-
     "Cancer Specific": {
         "type": "fixed",
         "rates": {
             "Cigna Manipal": 156.00,
         },
     },
-
-    "GTL": {
-        "type": "insurer",
-        "rates": {
-            "IPRU": 450.00,
-            "Aviva": 320.30,
-        },
-    },
-
     "PA + CI": {
         "type": "insurer",
         "rates": {
-            "Magma": 270.00,
+            "Magma": 300.00,
             "Cigna Manipal": 368.00,
         },
     },
-
     "CI": {
         "type": "fixed",
         "rates": {
             "Cigna Manipal": 344.00,
         },
     },
-
     "Health": {
         "type": "tier",
         "insurer": "Aditya Birla",
         "rates": {
-            "Plan 1": 1879.00,
-            "Plan 2": 2699.00,
-            "Plan 3": 3369.00,
+            "1 Lakh": 1879.00,
+            "3 Lakh": 2287.288135593220,
+            "5 Lakh": 3369.00,
         },
     },
 }
@@ -280,27 +265,66 @@ PRODUCTS = {
 
 # ============================================================
 # HELPER FUNCTIONS
+# (unchanged from source logic file)
 # ============================================================
 
-def round_half_up(value):
-    if value >= 0:
-        return math.floor(value + 0.5)
-    return math.ceil(value - 0.5)
+def round_half_up(amount):
+    """
+    Round to the nearest whole number, rounding .5 and above UP
+    (not Python's default banker's rounding, which rounds .5 to
+    the nearest even number).
+    """
+    if amount >= 0:
+        return math.floor(amount + 0.5)
+    return -math.floor(-amount + 0.5)
 
 
-def format_currency(value):
+def format_currency(amount):
+    """
+    Format number using Indian numbering system, rounded to the
+    nearest whole rupee (0.5 and above rounds up).
+    Example:
+    1000000 -> ₹10,00,000
+    """
+    amount = round_half_up(amount)
 
-    value = round_half_up(value)
+    number = str(amount)
+    integer_part = number
 
-    return "₹{:,.0f}".format(value)
+    negative = integer_part.startswith("-")
+    if negative:
+        integer_part = integer_part[1:]
+
+    if len(integer_part) <= 3:
+        formatted = integer_part
+    else:
+        last_three = integer_part[-3:]
+        remaining = integer_part[:-3]
+
+        groups = []
+        while len(remaining) > 2:
+            groups.insert(0, remaining[-2:])
+            remaining = remaining[:-2]
+
+        if remaining:
+            groups.insert(0, remaining)
+
+        formatted = ",".join(groups) + "," + last_three
+
+    if negative:
+        formatted = "-" + formatted
+
+    return f"₹{formatted}"
 
 
-def get_sorted_insurers(rates):
-
-    return sorted(
-        rates.items(),
-        key=lambda item: item[1]
-    )
+def get_insurer_options(rates_dict):
+    """
+    Given a dict of {insurer: rate}, return an ordered list of
+    (insurer, rate) tuples sorted by rate ascending — one entry
+    per insurer available for that product, so the user can pick
+    whichever insurer they want directly.
+    """
+    return sorted(rates_dict.items(), key=lambda x: x[1])
 
 
 # ============================================================
@@ -377,39 +401,27 @@ if selected_products:
     </div>
     """, unsafe_allow_html=True)
 
-
     for product_name in selected_products:
 
         product = PRODUCTS[product_name]
 
         col1, col2 = st.columns([1, 2])
 
-
         with col1:
-
             st.markdown(
                 f'<div class="product-name">{product_name}</div>',
                 unsafe_allow_html=True
             )
-
 
         with col2:
 
             # ----------------------------------------
             # INSURER SELECTION
             # ----------------------------------------
-
             if product["type"] == "insurer":
 
-                sorted_insurers = get_sorted_insurers(
-                    product["rates"]
-                )
-
-                insurer_names = [
-                    insurer
-                    for insurer, rate in sorted_insurers
-                ]
-
+                sorted_insurers = get_insurer_options(product["rates"])
+                insurer_names = [insurer for insurer, rate in sorted_insurers]
 
                 selected_insurer = st.selectbox(
                     f"Select insurer for {product_name}",
@@ -417,11 +429,7 @@ if selected_products:
                     key=f"insurer_{product_name}"
                 )
 
-
-                selected_rate = product["rates"][
-                    selected_insurer
-                ]
-
+                selected_rate = product["rates"][selected_insurer]
 
                 product_choices[product_name] = {
                     "insurer": selected_insurer,
@@ -429,19 +437,13 @@ if selected_products:
                     "option": "Standard"
                 }
 
-
             # ----------------------------------------
             # FIXED PRODUCT
             # ----------------------------------------
-
             elif product["type"] == "fixed":
 
-                insurer = list(
-                    product["rates"].keys()
-                )[0]
-
+                insurer = list(product["rates"].keys())[0]
                 rate = product["rates"][insurer]
-
 
                 st.selectbox(
                     f"Insurer for {product_name}",
@@ -449,36 +451,26 @@ if selected_products:
                     key=f"fixed_{product_name}"
                 )
 
-
                 product_choices[product_name] = {
                     "insurer": insurer,
                     "rate": rate,
                     "option": "Standard"
                 }
 
-
             # ----------------------------------------
             # TIER PRODUCT
             # ----------------------------------------
-
             elif product["type"] == "tier":
 
-                tier_options = list(
-                    product["rates"].keys()
-                )
-
+                tier_options = list(product["rates"].keys())
 
                 selected_tier = st.selectbox(
-                    f"Select option for {product_name}",
+                    f"Select Sum Insured tier for {product_name}",
                     tier_options,
                     key=f"tier_{product_name}"
                 )
 
-
-                rate = product["rates"][
-                    selected_tier
-                ]
-
+                rate = product["rates"][selected_tier]
 
                 product_choices[product_name] = {
                     "insurer": product["insurer"],
@@ -492,7 +484,6 @@ if selected_products:
 # ============================================================
 
 loading_percentage = 0.0
-
 
 if selected_products:
 
@@ -512,13 +503,13 @@ if selected_products:
     </div>
     """, unsafe_allow_html=True)
 
-
     loading_percentage = st.number_input(
         "Loading Percentage (%)",
         min_value=0.0,
         max_value=99.0,
         value=0.0,
-        step=0.5
+        step=0.5,
+        help="Premium is grossed up so this % of the final premium (before GST) equals the partner payout.",
     )
 
 
@@ -527,24 +518,19 @@ if selected_products:
 # ============================================================
 
 if selected_products:
-
     calculate = st.button(
         "Calculate Premium",
         type="primary",
         use_container_width=True
     )
-
 else:
-
     calculate = False
-
-    st.info(
-        "Select at least one product to calculate the premium."
-    )
+    st.info("Select at least one product to calculate the premium.")
 
 
 # ============================================================
 # CALCULATION RESULTS
+# (calculation logic unchanged from source logic file)
 # ============================================================
 
 if calculate:
@@ -552,69 +538,36 @@ if calculate:
     # --------------------------------------------------------
     # BASE PREMIUM
     # --------------------------------------------------------
-
     total_base_premium = sum(
         product_choices[product]["rate"]
         for product in selected_products
     )
 
-
     # --------------------------------------------------------
     # LOADING CALCULATION
     #
-    # Loading is calculated by grossing up the base premium.
-    #
-    # Example:
-    # Base = 100
-    # Loading = 20%
-    #
-    # Final Before GST = 100 / 0.80 = 125
-    # Partner Payout = 25
+    # Loading is treated as embedded partner commission: the base
+    # premium is grossed up so that `loading`% of the FINAL premium
+    # (before GST) equals the loading/partner-payout amount.
+    #   premium_before_gst = base / (1 - loading%)
+    #   loading_amount      = premium_before_gst - base
+    #                        = loading% of premium_before_gst (same value)
     # --------------------------------------------------------
-
-    if loading_percentage < 100:
-
-        premium_before_gst = (
-            total_base_premium /
-            (1 - loading_percentage / 100)
-        )
-
-    else:
-
-        premium_before_gst = total_base_premium
-
-
-    loading_amount = (
-        premium_before_gst -
-        total_base_premium
-    )
-
-
-    partner_payout = loading_amount
-
+    premium_before_gst = total_base_premium / (1 - loading_percentage / 100)
+    loading_amount = premium_before_gst - total_base_premium
+    partner_payout = loading_amount  # identical value, shown for the partner's clarity
 
     # --------------------------------------------------------
     # GST
     # --------------------------------------------------------
-
-    gst_amount = (
-        premium_before_gst *
-        GST_RATE / 100
-    )
-
-
-    final_premium = (
-        premium_before_gst +
-        gst_amount
-    )
-
+    gst_amount = premium_before_gst * GST_RATE / 100
+    final_premium = premium_before_gst + gst_amount
 
     # ========================================================
     # RESULTS HEADER
     # ========================================================
 
     st.divider()
-
 
     st.markdown("""
     <div class="step-label">
@@ -630,109 +583,59 @@ if calculate:
     </div>
     """, unsafe_allow_html=True)
 
-
     # ========================================================
     # KPI CARDS
     # ========================================================
 
     card1, card2, card3, card4 = st.columns(4)
 
-
     with card1:
-
         st.markdown(
             f"""
             <div class="metric-card purple-card">
-
-                <div class="metric-label">
-                    BASE PREMIUM
-                </div>
-
-                <div class="metric-value">
-                    {format_currency(total_base_premium)}
-                </div>
-
-                <div class="metric-note">
-                    Combined selected product premium
-                </div>
-
+                <div class="metric-label">BASE PREMIUM</div>
+                <div class="metric-value">{format_currency(total_base_premium)}</div>
+                <div class="metric-note">Combined selected product premium</div>
             </div>
             """,
             unsafe_allow_html=True
         )
 
-
     with card2:
-
         st.markdown(
             f"""
             <div class="metric-card teal-card">
-
-                <div class="metric-label">
-                    LOADING AMOUNT
-                </div>
-
-                <div class="metric-value">
-                    {format_currency(loading_amount)}
-                </div>
-
-                <div class="metric-note">
-                    Additional amount generated through loading
-                </div>
-
+                <div class="metric-label">LOADING AMOUNT</div>
+                <div class="metric-value">{format_currency(loading_amount)}</div>
+                <div class="metric-note">Additional amount generated through loading</div>
             </div>
             """,
             unsafe_allow_html=True
         )
 
-
     with card3:
-
         st.markdown(
             f"""
             <div class="metric-card orange-card">
-
-                <div class="metric-label">
-                    PARTNER PAYOUT
-                </div>
-
-                <div class="metric-value">
-                    {format_currency(partner_payout)}
-                </div>
-
-                <div class="metric-note">
-                    Calculated partner commission amount
-                </div>
-
+                <div class="metric-label">PARTNER PAYOUT</div>
+                <div class="metric-value">{format_currency(partner_payout)}</div>
+                <div class="metric-note">Calculated partner commission amount</div>
             </div>
             """,
             unsafe_allow_html=True
         )
 
-
     with card4:
-
         st.markdown(
             f"""
             <div class="metric-card dark-card">
-
-                <div class="metric-label">
-                    GST AMOUNT
-                </div>
-
-                <div class="metric-value">
-                    {format_currency(gst_amount)}
-                </div>
-
-                <div class="metric-note">
-                    GST calculated at 18%
-                </div>
-
+                <div class="metric-label">GST AMOUNT</div>
+                <div class="metric-value">{format_currency(gst_amount)}</div>
+                <div class="metric-note">GST calculated at 18%</div>
             </div>
             """,
             unsafe_allow_html=True
         )
-
 
     # ========================================================
     # FINAL PREMIUM
@@ -741,31 +644,19 @@ if calculate:
     st.markdown(
         f"""
         <div class="final-card">
-
-            <div class="final-label">
-                FINAL PREMIUM INCLUDING GST
-            </div>
-
-            <div class="final-value">
-                {format_currency(final_premium)}
-            </div>
-
-            <div class="final-note">
-                Premium before GST: {format_currency(premium_before_gst)}
-            </div>
-
+            <div class="final-label">FINAL PREMIUM INCLUDING GST</div>
+            <div class="final-value">{format_currency(final_premium)}</div>
+            <div class="final-note">Premium before GST: {format_currency(premium_before_gst)}</div>
         </div>
         """,
         unsafe_allow_html=True
     )
-
 
     # ========================================================
     # SELECTED PRODUCT SUMMARY
     # ========================================================
 
     st.divider()
-
 
     st.markdown("""
     <div class="section-title" style="font-size:18px;">
@@ -777,23 +668,16 @@ if calculate:
     </div>
     """, unsafe_allow_html=True)
 
-
     summary_data = []
 
-
     for product_name in selected_products:
-
         product_info = product_choices[product_name]
-
-
         summary_data.append({
             "Product": product_name,
             "Insurer": product_info["insurer"],
-            "Rate": format_currency(
-                product_info["rate"]
-            )
+            "Option": product_info["option"],
+            "Rate": format_currency(product_info["rate"])
         })
-
 
     st.dataframe(
         summary_data,
