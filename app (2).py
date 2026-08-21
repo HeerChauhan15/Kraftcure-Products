@@ -80,9 +80,10 @@ PRODUCTS = {
         },
     },
     "PA Hospicash": {
-        "type": "fixed",
+        "type": "insurer",
         "rates": {
-            "Magma": 424.00,
+            "Magma": 471.00,
+            "Tata": 169.00,
         },
     },
     "PA + Cancer Specific": {
@@ -100,7 +101,7 @@ PRODUCTS = {
     "PA + CI": {
         "type": "insurer",
         "rates": {
-            "Magma": 270.00,
+            "Magma": 300.00,
             "Cigna Manipal": 368.00,
         },
     },
