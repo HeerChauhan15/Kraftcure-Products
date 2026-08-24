@@ -120,6 +120,13 @@ PRODUCTS = {
             "5 Lakh": 3369.00,
         },
     },
+    "GTL": {
+        "type": "insurer",
+        "rates": {
+            "Aviva": 800.00,
+            "IPRU": 800.00,
+        },
+    },
 }
 
 
