@@ -83,7 +83,7 @@ PRODUCTS = {
         "type": "insurer",
         "rates": {
             "Magma": 471.00,
-            "Tata": 169.00,
+            "Tata": 250.00,
         },
     },
     "PA + Cancer Specific": {
