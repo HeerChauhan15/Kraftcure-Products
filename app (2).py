@@ -116,7 +116,7 @@ PRODUCTS = {
         "insurer": "Aditya Birla",
         "rates": {
             "1 Lakh": 1879.00,
-            "3 Lakh": 2287.288135593220,
+            "3 Lakh": 2699,
             "5 Lakh": 3369.00,
         },
     },
